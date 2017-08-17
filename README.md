@@ -1,7 +1,10 @@
 # SimpleNetworking
 
+Simple swift networking returning promises instead of just getting callbacks
+
 ## Sample usage
 
+```swift
 extension String : Error {}
 
 // get all certs in given bundle - default is main
@@ -46,3 +49,4 @@ DispatchQueue.global(qos: .background).async {
     print(postResponsePromise.value)
     PlaygroundPage.current.finishExecution() // just to complete all
 }
+```
