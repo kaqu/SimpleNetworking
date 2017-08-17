@@ -10,50 +10,54 @@ import Foundation
 
 public struct NetworkRequest {
     
-    public enum Method {
-        case get
-        case post(data: Data)
+    public enum Task {
+        case get(from: String)
+        case post(data: Data, type: NetworkRequest.ContentType, to: String)
+//        case .download(from:String)
     }
     
     public enum ContentType {
         case json(encoded: String.Encoding)
     }
     
-    let requestURL: URL
-    let method: Method
-    let contentType: ContentType
-    var currentSessionTask: URLSessionTask? = nil
+    public typealias Headers = [String:String]
     
-    let urlRequest: URLRequest
-    public init(_ method: Method = .get, on requestURL: URL, withContentType contentType: ContentType = .json(encoded: .utf8), andCustomHeaders customHeaders: [String:String] = [:]) {
-        self.requestURL = requestURL
-        self.method = method
-        self.contentType = contentType
-        self.urlRequest  = {
-            var request = URLRequest(url: requestURL)
-            request.httpMethod = method.methodString
-            let contentTypeHeader = contentType.requestHeaderValue
-            var customHeaders = customHeaders
-            customHeaders[contentTypeHeader.0] = contentTypeHeader.1
-            request.httpBody = method.data
+    public let urlRequest: URLRequest
+    internal var associatedSessionTask: URLSessionTask? = nil
+    
+    public init(_ task: Task, with headers: NetworkRequest.Headers = [:]) {
+        self.urlRequest = {
+            var request = URLRequest(url: task.url)
+            request.httpMethod = task.methodName
+            var customHeaders = headers
+            if let contentTypeHeader = task.contentType?.requestHeaderValue {
+                customHeaders[contentTypeHeader.0] = contentTypeHeader.1
+            }
+            request.httpBody = task.sentData
             request.allHTTPHeaderFields = customHeaders
             return request
         } ()
     }
 }
 
-extension NetworkRequest : Equatable {
-    public static func ==(lhs:NetworkRequest, rhs:NetworkRequest)-> Bool {
-        return lhs.requestURL == rhs.requestURL
-            && lhs.method == rhs.method
-            && lhs.contentType == rhs.contentType
-            && lhs.currentSessionTask == rhs.currentSessionTask
-    }
-}
-
-extension NetworkRequest.Method {
+extension NetworkRequest.Task {
     
-    var methodString: String {
+    var url: URL {
+        switch self {
+        case let .get(address):
+            guard let url = URL(string: address) else {
+                fatalError("Wrong url: \(address)")
+            }
+            return url
+        case let .post(_, _, address):
+            guard let url = URL(string: address) else {
+                fatalError("Wrong url: \(address)")
+            }
+            return url
+        }
+    }
+    
+    var methodName: String {
         switch self {
         case .get:
             return "GET"
@@ -62,24 +66,21 @@ extension NetworkRequest.Method {
         }
     }
     
-    var data: Data? {
+    var sentData: Data? {
         switch self {
         case .get:
             return nil
-        case let .post(data):
+        case let .post(data, _, _):
             return data
         }
     }
-}
-
-extension NetworkRequest.Method : Equatable {
-    public static func ==(lhs:NetworkRequest.Method, rhs:NetworkRequest.Method)-> Bool {
-        if rhs.methodString != lhs.methodString {
-            return false
-        } else if case .post(let lData) = lhs, case .post(let rData) = rhs {
-           return lData == rData
-        } else {
-            return true
+    
+    var contentType: NetworkRequest.ContentType? {
+        switch self {
+        case .get:
+            return nil
+        case let .post(_, contentType, _):
+            return contentType
         }
     }
 }
@@ -97,13 +98,7 @@ extension NetworkRequest.ContentType {
         if .utf8 == encoding {
             return "; charset=utf-8"
         } else {
-            return ""
+            fatalError("Unsupported character encoding")
         }
-    }
-}
-
-extension NetworkRequest.ContentType : Equatable {
-    public static func ==(lhs:NetworkRequest.ContentType, rhs:NetworkRequest.ContentType)-> Bool {
-        return lhs.requestHeaderValue == rhs.requestHeaderValue
     }
 }

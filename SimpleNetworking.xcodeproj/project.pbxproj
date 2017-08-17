@@ -13,6 +13,10 @@
 		4093E86C1F44518500CA2E82 /* SimpleNetworkingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E86B1F44518500CA2E82 /* SimpleNetworkingTests.swift */; };
 		4093E86E1F44518500CA2E82 /* SimpleNetworking.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4093E8501F44372000CA2E82 /* SimpleNetworking.framework */; };
 		4093E8751F4451F600CA2E82 /* NetworkRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E8741F4451F600CA2E82 /* NetworkRequest.swift */; };
+		4093E8791F4486C800CA2E82 /* NetworkingDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E8781F4486C800CA2E82 /* NetworkingDelegate.swift */; };
+		40D15E701F4497DD0071F001 /* Promise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40D15E6F1F4497DD0071F001 /* Promise.swift */; };
+		40D15E721F4497E60071F001 /* NetworkResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40D15E711F4497E60071F001 /* NetworkResponse.swift */; };
+		40D15E741F45774D0071F001 /* FailablePromise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40D15E731F45774D0071F001 /* FailablePromise.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,6 +39,10 @@
 		4093E86B1F44518500CA2E82 /* SimpleNetworkingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimpleNetworkingTests.swift; sourceTree = "<group>"; };
 		4093E86D1F44518500CA2E82 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4093E8741F4451F600CA2E82 /* NetworkRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkRequest.swift; sourceTree = "<group>"; };
+		4093E8781F4486C800CA2E82 /* NetworkingDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkingDelegate.swift; sourceTree = "<group>"; };
+		40D15E6F1F4497DD0071F001 /* Promise.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Promise.swift; sourceTree = "<group>"; };
+		40D15E711F4497E60071F001 /* NetworkResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkResponse.swift; sourceTree = "<group>"; };
+		40D15E731F45774D0071F001 /* FailablePromise.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FailablePromise.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +85,7 @@
 		4093E8521F44372000CA2E82 /* SimpleNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				40D15E6E1F4497A70071F001 /* Promise */,
 				4093E8601F44387100CA2E82 /* Security */,
 				4093E85B1F44375600CA2E82 /* Core */,
 				4093E8531F44372000CA2E82 /* SimpleNetworking.h */,
@@ -90,6 +99,8 @@
 			children = (
 				4093E85E1F4437E500CA2E82 /* Networking.swift */,
 				4093E8741F4451F600CA2E82 /* NetworkRequest.swift */,
+				4093E8781F4486C800CA2E82 /* NetworkingDelegate.swift */,
+				40D15E711F4497E60071F001 /* NetworkResponse.swift */,
 			);
 			name = Core;
 			sourceTree = "<group>";
@@ -109,6 +120,15 @@
 				4093E86D1F44518500CA2E82 /* Info.plist */,
 			);
 			path = SimpleNetworkingTests;
+			sourceTree = "<group>";
+		};
+		40D15E6E1F4497A70071F001 /* Promise */ = {
+			isa = PBXGroup;
+			children = (
+				40D15E6F1F4497DD0071F001 /* Promise.swift */,
+				40D15E731F45774D0071F001 /* FailablePromise.swift */,
+			);
+			name = Promise;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -226,7 +246,11 @@
 			files = (
 				4093E8621F44387E00CA2E82 /* CertificateContainer.swift in Sources */,
 				4093E85F1F4437E500CA2E82 /* Networking.swift in Sources */,
+				40D15E741F45774D0071F001 /* FailablePromise.swift in Sources */,
+				40D15E701F4497DD0071F001 /* Promise.swift in Sources */,
+				4093E8791F4486C800CA2E82 /* NetworkingDelegate.swift in Sources */,
 				4093E8751F4451F600CA2E82 /* NetworkRequest.swift in Sources */,
+				40D15E721F4497E60071F001 /* NetworkResponse.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -434,6 +458,7 @@
 				4093E85A1F44372000CA2E82 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4093E8711F44518500CA2E82 /* Build configuration list for PBXNativeTarget "SimpleNetworkingTests" */ = {
 			isa = XCConfigurationList;
@@ -442,6 +467,7 @@
 				4093E8731F44518500CA2E82 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
