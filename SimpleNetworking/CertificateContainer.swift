@@ -8,32 +8,25 @@
 
 import Foundation
 
-public struct CertificateContainer {
+public protocol CertificateContainer {
     
-    public let containerBundle: Bundle
+    var certificates: [SecCertificate] { get }
+}
+
+internal func getCertificates(from bundle: Bundle = Bundle.main) -> [SecCertificate] {
+    var certificates: [SecCertificate] = []
     
-    public let certificates: [SecCertificate]
+    let paths = Set([".cer", ".CER", ".crt", ".CRT", ".der", ".DER"].map { fileExtension in
+        bundle.paths(forResourcesOfType: fileExtension, inDirectory: nil)
+        }.joined())
     
-    public init(containerBundle: Bundle = Bundle.main) {
-        self.containerBundle = containerBundle
-        self.certificates = CertificateContainer.certificates(in: containerBundle)
-    }
-    
-    private static func certificates(in bundle: Bundle = Bundle.main) -> [SecCertificate] {
-        var certificates: [SecCertificate] = []
-        
-        let paths = Set([".cer", ".CER", ".crt", ".CRT", ".der", ".DER"].map { fileExtension in
-            bundle.paths(forResourcesOfType: fileExtension, inDirectory: nil)
-            }.joined())
-        
-        for path in paths {
-            if let certificateData = try? Data(contentsOf: URL(fileURLWithPath: path)) as CFData,
-                let certificate = SecCertificateCreateWithData(nil, certificateData)
-            {
-                certificates.append(certificate)
-            }
+    for path in paths {
+        if let certificateData = try? Data(contentsOf: URL(fileURLWithPath: path)) as CFData,
+            let certificate = SecCertificateCreateWithData(nil, certificateData)
+        {
+            certificates.append(certificate)
         }
-        
-        return certificates
     }
+    
+    return certificates
 }

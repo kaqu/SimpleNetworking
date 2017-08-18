@@ -13,7 +13,7 @@ public struct NetworkRequest {
     public enum Task {
         case get(from: String)
         case post(data: Data, type: NetworkRequest.ContentType, to: String)
-//        case .download(from:String)
+        case download(from:String, savingTo: URL)
     }
     
     public enum ContentType {
@@ -23,9 +23,12 @@ public struct NetworkRequest {
     public typealias Headers = [String:String]
     
     public let urlRequest: URLRequest
+    public let task: Task
     internal var associatedSessionTask: URLSessionTask? = nil
+    internal var responsePromise: FailablePromise<NetworkResponse>?
     
     public init(_ task: Task, with headers: NetworkRequest.Headers = [:]) {
+        self.task = task
         self.urlRequest = {
             var request = URLRequest(url: task.url)
             request.httpMethod = task.methodName
@@ -37,6 +40,14 @@ public struct NetworkRequest {
             request.allHTTPHeaderFields = customHeaders
             return request
         } ()
+    }
+    
+    static func authorizationHeader(user: String, password: String) -> (key: String, value: String)? {
+        guard let data = "\(user):\(password)".data(using: .utf8) else { return nil }
+        
+        let credential = data.base64EncodedString(options: [])
+        
+        return (key: "Authorization", value: "Basic \(credential)")
     }
 }
 
@@ -54,6 +65,11 @@ extension NetworkRequest.Task {
                 fatalError("Wrong url: \(address)")
             }
             return url
+        case let .download(address, _):
+            guard let url = URL(string: address) else {
+                fatalError("Wrong url: \(address)")
+            }
+            return url
         }
     }
     
@@ -63,6 +79,8 @@ extension NetworkRequest.Task {
             return "GET"
         case .post:
             return "POST"
+        case .download:
+            return "GET"
         }
     }
     
@@ -72,6 +90,8 @@ extension NetworkRequest.Task {
             return nil
         case let .post(data, _, _):
             return data
+        case .download:
+            return nil
         }
     }
     
@@ -81,6 +101,8 @@ extension NetworkRequest.Task {
             return nil
         case let .post(_, contentType, _):
             return contentType
+        case .download:
+            return nil
         }
     }
 }

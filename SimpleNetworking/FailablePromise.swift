@@ -12,19 +12,22 @@ public class FailablePromise<T> {
     
     fileprivate var semaphore: DispatchSemaphore = DispatchSemaphore(value: 0)
     
-    private var trainsformCompletion: ((T?, Error?)->())? {
+    fileprivate var transformCompletion: ((T?, Error?)->())? {
         didSet {
             switch state {
             case .waiting:
                 break
             case let .fulfilled(value):
-                trainsformCompletion?(value, nil)
+                transformCompletion?(value, nil)
             case let .failed(error):
-                trainsformCompletion?(nil, error)
+                transformCompletion?(nil, error)
             }
         }
     }
-    public var fulfillHandler: ((T)->())? {
+    
+    fileprivate var transformProgress: ((Progress)->())?
+    
+    fileprivate var fulfillHandler: (DispatchQueue, (T)->())? {
         didSet {
             switch state {
             case .waiting:
@@ -32,11 +35,17 @@ public class FailablePromise<T> {
             case .failed:
                 break
             case let .fulfilled(value):
-                fulfillHandler?(value)
+                if let (queue, handler) = fulfillHandler {
+                    queue.async {
+                        handler(value)
+                    }
+                }
             }
         }
     }
-    public var failureHandler: ((Error)->())? {
+    
+    
+    fileprivate var failureHandler: (DispatchQueue, (Error)->())? {
         didSet {
             switch state {
             case .waiting:
@@ -44,10 +53,16 @@ public class FailablePromise<T> {
             case .fulfilled:
                 break
             case let .failed(error):
-                failureHandler?(error)
+                if let (queue, handler) = failureHandler {
+                    queue.async {
+                        handler(error)
+                    }
+                }
             }
         }
     }
+    
+    fileprivate var progressHandler: (DispatchQueue, (Progress)->())?
     
     fileprivate var state: State = .waiting {
         willSet {
@@ -59,12 +74,20 @@ public class FailablePromise<T> {
                 break
             case let .fulfilled(value):
                 semaphore.signal()
-                fulfillHandler?(value)
-                trainsformCompletion?(value, nil)
+                if let (queue, handler) = fulfillHandler {
+                    queue.async {
+                        handler(value)
+                    }
+                }
+                transformCompletion?(value, nil)
             case let .failed(error):
                 semaphore.signal()
-                failureHandler?(error)
-                trainsformCompletion?(nil, error)
+                if let (queue, handler) = failureHandler {
+                    queue.async {
+                        handler(error)
+                    }
+                }
+                transformCompletion?(nil, error)
             }
             
         }
@@ -78,7 +101,7 @@ public class FailablePromise<T> {
     
     private init<A>(transforming promise: FailablePromise<A>, with transform: @escaping (A)->TransformationResult) {
         self.trensformedPromiseRef = promise
-        promise.trainsformCompletion = { [weak self] value, error in
+        promise.transformCompletion = { [weak self] value, error in
             if let error = error {
                 self?.send(.fail(with: error))
             } else if let value = value {
@@ -91,6 +114,9 @@ public class FailablePromise<T> {
             } else {
                 fatalError("Internal inconsitency - promise completion without any information")
             }
+        }
+        promise.transformProgress = { [weak self] progress in
+            self?.send(.progress(value: progress))
         }
     }
     
@@ -111,17 +137,45 @@ public class FailablePromise<T> {
     
     indirect internal enum Message {
         case fulfill(with: T)
+        case progress(value: Progress)
         case fail(with: Error)
     }
 }
 
 extension FailablePromise {
     
+    @discardableResult
+    public func fulfillmentHandler(on queue: DispatchQueue = .main, withHandler handler: @escaping (T)->()) -> Self {
+        self.fulfillHandler = (queue, handler)
+        return self
+    }
+    
+    @discardableResult
+    public func failureHandler(on queue: DispatchQueue = .main, withHandler handler: @escaping (Error)->()) -> Self {
+        self.failureHandler = (queue, handler)
+        return self
+    }
+    
+    @discardableResult
+    public func progressHandler(on queue: DispatchQueue = .main, withHandler handler: @escaping (Progress)->()) -> Self {
+        self.progressHandler = (queue, handler)
+        return self
+    }
+}
+
+extension FailablePromise {
+    
     internal func send(_ message: Message) {
-        //        precondition(fulfillingThread == Thread.current, "Internal inconsitency - promise message sent on wrong thread")
         switch message {
         case let .fulfill(data):
             self.state = .fulfilled(value:data)
+        case let .progress(value):
+            if let (queue, handler) = progressHandler {
+                queue.async {
+                    handler(value)
+                }
+            }
+            self.transformProgress?(value)
         case let .fail(error):
             self.state = .failed(reason: error)
         }
@@ -132,9 +186,6 @@ extension FailablePromise {
     
     public var value: T? {
         if case .waiting = state {
-            //            if fulfillingThread == Thread.current {
-            //                fatalError("Internal inconsitency - waiting promise doing deadlock on thread: \(Thread.current)")
-            //            }
             semaphore.wait()
         }
         if case let .fulfilled(value) = state {

@@ -8,11 +8,13 @@
 
 import Foundation
 
-internal final class NetworkingDelegate : NSObject, URLSessionDelegate {
+internal class NetworkingDelegate : NSObject, URLSessionTaskDelegate, URLSessionDelegate, URLSessionDownloadDelegate  {
     
-    let trustedServerCertificates: Dictionary<String,CertificateContainer>
+    let trustedServerCertificates: [PinningCertificateContainer]
     
-    init(with trustedServerCertificates: Dictionary<String,CertificateContainer>) {
+    internal var pendingRequests = [NetworkRequest]()
+    
+    init(with trustedServerCertificates: [PinningCertificateContainer]) {
         self.trustedServerCertificates = trustedServerCertificates
         super.init()
     }
@@ -44,21 +46,10 @@ extension NetworkingDelegate {
         SecTrustSetPolicies(serverTrust, policy)
         
         if pinCertificatesEnabled {
-            guard let trustedCertificatesForHost = trustedServerCertificates[host]?.certificates else { return }
-            
-//            let serverCertificatesDataArray = serverTrust.certificates.map { SecCertificateCopyData($0) as Data }
-//            let trustedCertificatesDataArray = trustedCertificatesForHost.map { SecCertificateCopyData($0) as Data }
-//            
-//            for serverCertificateData in serverCertificatesDataArray {
-//                    if trustedCertificatesDataArray.contains(serverCertificateData) {
-//                        disposition = .useCredential
-//                        credential = URLCredential(trust:serverTrust)
-//                        return
-//                }
-//            }
-            
-                        SecTrustSetAnchorCertificates(serverTrust, trustedCertificatesForHost as CFArray)
-                        SecTrustSetAnchorCertificatesOnly(serverTrust, true)
+            guard let trustedCertificatesForHost = trustedServerCertificates.first(where: { $0.isAssociatedWith(host:host) })?.certificates else { return }
+            // TODO: if host matches more than one certificate container certs should be merged
+            SecTrustSetAnchorCertificates(serverTrust, trustedCertificatesForHost as CFArray)
+            SecTrustSetAnchorCertificatesOnly(serverTrust, true)
         }
         
         if serverTrust.isValid {
@@ -68,6 +59,69 @@ extension NetworkingDelegate {
             disposition = .cancelAuthenticationChallenge
         }
     }
+    
+}
+
+extension NetworkingDelegate  {
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        guard let finishedRequestIndex = pendingRequests.index(where: { $0.associatedSessionTask == task }) else {
+            return
+        }
+        pendingRequests.remove(at: finishedRequestIndex)
+    }
+    
+    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didResumeAtOffset fileOffset: Int64, expectedTotalBytes: Int64) {
+        // TODO: to complete
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        // TODO: to complete
+        
+        completionHandler(request)
+    }
+    
+    public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
+
+        guard let downloadRequest = pendingRequests.first(where: { $0.associatedSessionTask == downloadTask } ) else {
+            return
+        }
+        
+        guard case let .download(_, destination) = downloadRequest.task else {
+            return
+        }
+        
+        do {
+            try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true, attributes: nil)
+            try Data(contentsOf: location).write(to: destination)
+        } catch {
+            Networking.responseQueue.async {
+                downloadRequest.responsePromise?.send(.fail(with:error))
+            }
+            return
+        }
+        
+        Networking.responseQueue.async {
+            if let response = downloadTask.response as? HTTPURLResponse, let data = try? Data(contentsOf: destination) {
+                downloadRequest.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: data)))
+            } else {
+                fatalError("Lazy programmist") //TODO: FIXME: to complete
+                //                responsePromise.send(.fail(with:Error.noErrorOrResponse))
+            }
+        }
+    }
+    
+    @objc public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+        
+        guard let downloadRequest = pendingRequests.first(where: { $0.associatedSessionTask == downloadTask } ) else {
+            return
+        }
+        let progressValue = Progress(totalUnitCount: 0)
+        progressValue.totalUnitCount = totalBytesExpectedToWrite
+        progressValue.completedUnitCount = totalBytesWritten
+        downloadRequest.responsePromise?.send(.progress(value: progressValue))
+    }
+    
     
 }
 
