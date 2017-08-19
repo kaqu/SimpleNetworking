@@ -151,7 +151,9 @@ extension NetworkingDelegate : URLSessionDataDelegate {
         guard let request = pendingRequests[dataTask.taskIdentifier] else {
             return
         }
-        
+        defer {
+            pendingRequests[dataTask.taskIdentifier] = nil
+        }
         //        Networking.responseQueue.async {
         if let response = dataTask.response as? HTTPURLResponse {
             if (NetworkingDelegate.validHTTPCodes).contains(response.statusCode) {
@@ -182,6 +184,10 @@ extension NetworkingDelegate : URLSessionDownloadDelegate {
             return
         }
         
+        defer {
+            pendingRequests[downloadTask.taskIdentifier] = nil
+        }
+        
         do {
             try Data(contentsOf: location).write(to: destination, options: .atomicWrite)
         } catch {
@@ -210,6 +216,11 @@ extension NetworkingDelegate : URLSessionDownloadDelegate {
         guard let downloadRequest = pendingRequests[downloadTask.taskIdentifier] else {
             return
         }
+        
+//        defer {
+//            pendingRequests[downloadTask.taskIdentifier] = nil
+//        }
+        
         let progressValue = Progress(totalUnitCount: totalBytesExpectedToWrite)
         progressValue.completedUnitCount = totalBytesWritten
         //        Networking.responseQueue.async {

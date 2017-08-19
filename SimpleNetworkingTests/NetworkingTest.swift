@@ -26,35 +26,62 @@ class NetworkingTest: XCTestCase {
     }
     
     func testSuccessStatusCodes() {
-        let semaphore = DispatchSemaphore(value: 0)
-        DispatchQueue.global().async {
-            let code = 200
-            //        for code in 200..<400 {
-            guard let response = self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value else {
-                XCTAssert(false, "No response from network!")
-                return
+        let dispatchGroup = DispatchGroup()
+        let code = 200
+        //        for code in 200..<400 {
+        dispatchGroup.enter()
+        DispatchQueue.global(qos: .userInteractive).async {
+            self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)"))
+                .fulfillmentHandler(on: DispatchQueue.global(qos: .utility)) { _ in
+                    dispatchGroup.leave()
+                }.failureHandler(on: DispatchQueue.global(qos: .utility)) { _ in
+                    dispatchGroup.leave()
             }
-            XCTAssert(response.statusCode == code, "Network response not OK - status: \(response.statusCode)")
-            //
-            semaphore.signal()
+            //                XCTAssert(nil == self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
+            //                dispatchGroup.leave()
         }
-        XCTAssert(.success == semaphore.wait(timeout: .now() + 5), "Not in time - possible deadlock or fail")
+        //            guard let response = self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value else {
+        //                XCTAssert(false, "No response from network!")
+        //                return
+        //            }
+        //            XCTAssert(response.statusCode == code, "Network response not OK - status: \(response.statusCode)")
+        //
+        dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {}
+        XCTAssert(.success == dispatchGroup.wait(timeout: .now() + 5), "Not in time - possible deadlock or fail")
     }
     
     
     func testErrorStatusCodes() {
-        let semaphore = DispatchSemaphore(value: 0)
-        DispatchQueue.global().async {
-            for code in 100..<200 {
-                XCTAssert(nil == self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
+        let dispatchGroup = DispatchGroup()
+        for code in 100..<200 {
+            dispatchGroup.enter()
+            DispatchQueue.global(qos: .userInteractive).async {
+                self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)"))
+                    .fulfillmentHandler(on: DispatchQueue.global(qos: .utility)) { _ in
+                        dispatchGroup.leave()
+                    }.failureHandler(on: DispatchQueue.global(qos: .utility)) { _ in
+                        dispatchGroup.leave()
+                }
+                //                XCTAssert(nil == self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
+                //                dispatchGroup.leave()
             }
-            
-            for code in 400..<600 {
-                XCTAssert(nil == self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
-            }
-            semaphore.signal()
         }
-        XCTAssert(.success == semaphore.wait(timeout: .now() + 5), "Not in time - possible deadlock or fail")
+        
+        for code in 400..<600 {
+            dispatchGroup.enter()
+            DispatchQueue.global(qos: .userInteractive).async {
+                self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)"))
+                    .fulfillmentHandler(on: DispatchQueue.global(qos: .utility)) { _ in
+                        dispatchGroup.leave()
+                    }.failureHandler(on: DispatchQueue.global(qos: .utility)) { _ in
+                        dispatchGroup.leave()
+                }
+                //                XCTAssert(nil == self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
+                //                dispatchGroup.leave()
+            }
+        }
+        dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {}
+        XCTAssert(.success == dispatchGroup.wait(timeout: .now() + 30), "Not in time - possible deadlock or fail")
     }
     
     func testGETRequest() {

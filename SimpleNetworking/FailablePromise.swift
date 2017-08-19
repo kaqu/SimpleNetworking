@@ -96,6 +96,7 @@ public class FailablePromise<T> {
     public init() {
         self.trensformedPromiseRef = nil
         self.dispatchGroup.enter()
+        dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {}
     }
     
     private let trensformedPromiseRef: AnyObject?
@@ -120,6 +121,7 @@ public class FailablePromise<T> {
         promise.transformProgress = { [weak self] progress in
             self?.send(.progress(value: progress))
         }
+        dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {}
     }
     
     public func transform<A>(with transform: @escaping (T)->(FailablePromise<A>.TransformationResult)) -> FailablePromise<A> {
@@ -200,9 +202,9 @@ extension FailablePromise {
     
     public var value: T? {
         if !completed {
-            dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {
-                print("All async calls were run!")
-            }
+//            dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {
+//                print("All async calls were run!")
+//            }
             dispatchGroup.wait()
         }
         if case let .fulfilled(value) = state {
@@ -216,9 +218,9 @@ extension FailablePromise {
     
     public func valueWithTimeout(_ timeout: Double) -> T? {
         if !completed {
-            dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {
-                print("All async calls were run!")
-            }
+//            dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {
+//                print("All async calls were run!")
+//            }
             let waitResult = dispatchGroup.wait(timeout: DispatchTime.now() + timeout)
             if case .timedOut = waitResult {
                 return nil
