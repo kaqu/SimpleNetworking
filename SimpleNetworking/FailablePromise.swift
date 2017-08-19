@@ -165,6 +165,9 @@ extension FailablePromise {
 extension FailablePromise {
     
     internal func send(_ message: Message) {
+        guard case .waiting = state else {
+            return
+        }
         switch message {
         case let .fulfill(data):
             self.state = .fulfilled(value:data)
@@ -200,20 +203,29 @@ extension FailablePromise {
 extension FailablePromise {
     
     fileprivate func checkStateChange(from: State, to: State) {
-        if case .waiting = to {
-            if case .fulfilled = from {
-                fatalError("Internal inconsitency - promise can't wait when already fulfilled or failed")
-            } else if case .failed = from {
-                fatalError("Internal inconsitency - promise can't wait when already fulfilled or failed")
-            }
-        } else if case .fulfilled = to {
-            if case .failed = from {
-                fatalError("Internal inconsitency - promise can't fail when already fulfilled")
-            }
-        } else if case .failed = to {
-            if case .fulfilled = from {
-                fatalError("Internal inconsitency - promise can't fulfill when already failed")
-            }
+        guard case .waiting = from else {
+            fatalError("Internal inconsitency - promise can't change state in not waiting")
         }
+//            fatalError("Internal inconsitency - promise can't start waiting")
+//            if case .fulfilled = from {
+//                fatalError("Internal inconsitency - promise can't wait when already fulfilled or failed")
+//            } else if case .failed = from {
+//                fatalError("Internal inconsitency - promise can't wait when already fulfilled or failed")
+//            } else {
+//                fatalError("Internal inconsitency - promise can't start wait when already waiting")
+//            }
+//        } else if case .fulfilled = to {
+//            if case .failed = from {
+//                fatalError("Internal inconsitency - promise can't fail when already fulfilled")
+//            } else if case .fulfilled = from {
+//                fatalError("Internal inconsitency - promise can't fulfill when already fulfilled")
+//            }
+//        } else if case .failed = to {
+//            if case .fulfilled = from {
+//                fatalError("Internal inconsitency - promise can't fulfill when already failed")
+//            } else if case .failed = from {
+//                fatalError("Internal inconsitency - promise can't fail when already failed")
+//            }
+//        }
     }
 }

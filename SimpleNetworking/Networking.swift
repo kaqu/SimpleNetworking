@@ -17,8 +17,9 @@ public final class Networking {
     public let session: URLSession
     internal let delegate: NetworkingDelegate
     
-    static let requestQueue: DispatchQueue = DispatchQueue(label: "Networking-Request-Queue", qos: .default, attributes: .concurrent)
-    static let responseQueue: DispatchQueue = DispatchQueue(label: "Networking-Response-Queue", qos: .default, attributes: .concurrent)
+//    static let networkingQueue: DispatchQueue = DispatchQueue(label: "Networking-RequestQueue", qos: .default)
+    static let requestQueue: DispatchQueue = DispatchQueue(label: "Networking-RequestQueue", qos: .default, attributes: .concurrent)
+    static let responseQueue: DispatchQueue = DispatchQueue(label: "Networking-ResponseQueue", qos: .default, attributes: .concurrent)
     
     public init(withTrustedServerCertificates trustedServerCertificates: [PinningCertificateContainer] = []) {
         self.delegate = NetworkingDelegate(with:trustedServerCertificates)
@@ -30,6 +31,8 @@ public final class Networking {
         case noErrorOrResponse
         case invalidResponse
         case noData
+        case cancelled
+        case statusCode(Int)
     }
 }
 

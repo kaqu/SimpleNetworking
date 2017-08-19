@@ -9,41 +9,17 @@
 import XCTest
 @testable import SimpleNetworking
 
+extension String : Error {}
+
 class SimpleNetworkingTests: XCTestCase {
-    
-    var networking = Networking()
     
     override func setUp() {
         super.setUp()
-        networking = Networking()
+        
     }
     
     override func tearDown() {
         
         super.tearDown()
     }
-    
-    func testGetRequestNoPinning() {
-        
-    }
-    
-    func testGetRequestWithPinning() {
-        
-    }
-    
-    func testPOSTRequestNoPinning() {
-        
-    }
-    
-    func testPOSTRequestWithPinning() {
-        
-    }
-    
-    func testPerformanceExample() {
-        // This is an example of a performance test case.
-        self.measure {
-            // Put the code you want to measure the time of here.
-        }
-    }
-    
 }

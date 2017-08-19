@@ -83,20 +83,25 @@ extension NetworkingDelegate : URLSessionDelegate {
         }
         
         redirectedRequest = handler(response, request)
+        
+        guard nil == redirectedRequest else {
+            return
+        }
+        
+        task.cancel()
+    }
+    
+    public func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {
+        // TODO: to complete - app background events
     }
 }
 
 extension NetworkingDelegate : URLSessionTaskDelegate {
     
-    
-    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
-        // TODO: upload progress
-    }
-    
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         if let error = error, let failedRequest = pendingRequests.first(where: { $0.associatedSessionTask == task }) {
             Networking.responseQueue.async {
-                    failedRequest.responsePromise?.send(.fail(with:error))
+                failedRequest.responsePromise?.send(.fail(with:error))
             }
         }
         guard let finishedRequestIndex = pendingRequests.index(where: { $0.associatedSessionTask == task }) else {
@@ -105,16 +110,40 @@ extension NetworkingDelegate : URLSessionTaskDelegate {
         pendingRequests.remove(at: finishedRequestIndex)
     }
     
-    
-    
     public func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Swift.Void) {
         urlSession(session, didReceive: challenge, completionHandler: completionHandler) // TODO: to check
+    }
+    
+    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Swift.Void) {
+        defer {
+            completionHandler(.allow)
+        }
+        guard let response = response as? HTTPURLResponse else {
+            return
+        }
+        
+        guard !(200..<400).contains(response.statusCode) else {
+            return
+        }
+        
+        guard let request = pendingRequests.first(where: { $0.associatedSessionTask == dataTask } ) else {
+            return
+        }
+        print(response.statusCode)
+        Networking.responseQueue.async {
+            request.responsePromise?.send(.fail(with:Networking.Error.statusCode(response.statusCode)))
+        }
+        
     }
 }
 
 extension NetworkingDelegate : URLSessionDataDelegate {
     
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        guard dataTask.state == .running else {
+            return
+        }
+        
         guard let request = pendingRequests.first(where: { $0.associatedSessionTask == dataTask } ) else {
             return
         }
@@ -123,8 +152,7 @@ extension NetworkingDelegate : URLSessionDataDelegate {
             if let response = dataTask.response as? HTTPURLResponse {
                 request.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: data)))
             } else {
-                fatalError("Lazy programmist") //TODO: FIXME: to complete
-                //                responsePromise.send(.fail(with:Error.noErrorOrResponse))
+                request.responsePromise?.send(.fail(with:Networking.Error.invalidResponse))
             }
         }
     }
@@ -174,8 +202,7 @@ extension NetworkingDelegate : URLSessionDownloadDelegate {
         guard let downloadRequest = pendingRequests.first(where: { $0.associatedSessionTask == downloadTask } ) else {
             return
         }
-        let progressValue = Progress(totalUnitCount: 0)
-        progressValue.totalUnitCount = totalBytesExpectedToWrite
+        let progressValue = Progress(totalUnitCount: totalBytesExpectedToWrite)
         progressValue.completedUnitCount = totalBytesWritten
         Networking.responseQueue.async {
             downloadRequest.responsePromise?.send(.progress(value: progressValue))
@@ -211,7 +238,6 @@ extension SecTrust {
         if status == errSecSuccess {
             let unspecified = SecTrustResultType.unspecified
             let proceed = SecTrustResultType.proceed
-            
             
             isValid = result == unspecified || result == proceed
         }
