@@ -94,10 +94,21 @@ extension NetworkingDelegate : URLSessionTaskDelegate {
     }
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        if let error = error, let failedRequest = pendingRequests.first(where: { $0.associatedSessionTask == task }) {
+            Networking.responseQueue.async {
+                    failedRequest.responsePromise?.send(.fail(with:error))
+            }
+        }
         guard let finishedRequestIndex = pendingRequests.index(where: { $0.associatedSessionTask == task }) else {
             return
         }
         pendingRequests.remove(at: finishedRequestIndex)
+    }
+    
+    
+    
+    public func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Swift.Void) {
+        urlSession(session, didReceive: challenge, completionHandler: completionHandler) // TODO: to check
     }
 }
 

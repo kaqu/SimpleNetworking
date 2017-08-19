@@ -40,7 +40,7 @@ extension Networking {
     }
     
     
-    private func perform(request: NetworkRequest, respondingOn responseQueue: DispatchQueue = Networking.responseQueue) -> FailablePromise<NetworkResponse> {
+    public func perform(request: NetworkRequest, respondingOn responseQueue: DispatchQueue = Networking.responseQueue) -> FailablePromise<NetworkResponse> {
         
         let responsePromise = FailablePromise<NetworkResponse>()
         Networking.requestQueue.async {
