@@ -44,7 +44,6 @@ public class FailablePromise<T> {
         }
     }
     
-    
     fileprivate var failureHandler: (DispatchQueue, (Error)->())? {
         didSet {
             switch state {

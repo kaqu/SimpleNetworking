@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		40149E271F4816F600939DD3 /* NetworkEndpoint.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40149E261F4816F600939DD3 /* NetworkEndpoint.swift */; };
 		4093E8551F44372000CA2E82 /* SimpleNetworking.h in Headers */ = {isa = PBXBuildFile; fileRef = 4093E8531F44372000CA2E82 /* SimpleNetworking.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4093E85F1F4437E500CA2E82 /* Networking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E85E1F4437E500CA2E82 /* Networking.swift */; };
 		4093E8621F44387E00CA2E82 /* CertificateContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E8611F44387E00CA2E82 /* CertificateContainer.swift */; };
@@ -31,6 +32,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		40149E261F4816F600939DD3 /* NetworkEndpoint.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkEndpoint.swift; sourceTree = "<group>"; };
 		4093E8501F44372000CA2E82 /* SimpleNetworking.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SimpleNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4093E8531F44372000CA2E82 /* SimpleNetworking.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SimpleNetworking.h; sourceTree = "<group>"; };
 		4093E8541F44372000CA2E82 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -138,6 +140,7 @@
 			isa = PBXGroup;
 			children = (
 				40DB2E511F470D14000740A0 /* NetworkService.swift */,
+				40149E261F4816F600939DD3 /* NetworkEndpoint.swift */,
 			);
 			name = Service;
 			sourceTree = "<group>";
@@ -257,6 +260,7 @@
 			files = (
 				4093E8621F44387E00CA2E82 /* CertificateContainer.swift in Sources */,
 				4093E85F1F4437E500CA2E82 /* Networking.swift in Sources */,
+				40149E271F4816F600939DD3 /* NetworkEndpoint.swift in Sources */,
 				40DB2E7B1F472E40000740A0 /* PinningCertificateContainer.swift in Sources */,
 				40D15E741F45774D0071F001 /* FailablePromise.swift in Sources */,
 				4093E8791F4486C800CA2E82 /* NetworkingDelegate.swift in Sources */,

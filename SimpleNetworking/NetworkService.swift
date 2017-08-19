@@ -10,5 +10,9 @@ import Foundation
 
 public protocol NetworkService {
     
-    var networking: Networking { get }
+    var path: String { get }
+    
+    var task: NetworkEndpoint.Task { get }
+    
+    var headers: NetworkRequest.Headers { get }
 }

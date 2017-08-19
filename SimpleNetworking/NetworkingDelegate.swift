@@ -8,11 +8,14 @@
 
 import Foundation
 
-internal class NetworkingDelegate : NSObject, URLSessionTaskDelegate, URLSessionDelegate, URLSessionDownloadDelegate  {
+internal class NetworkingDelegate : NSObject  {
     
     let trustedServerCertificates: [PinningCertificateContainer]
     
     internal var pendingRequests = [NetworkRequest]()
+    
+    internal var redirectionHandler: ((HTTPURLResponse, URLRequest)->URLRequest?)?
+    internal var sessionInvalidationHandler: ((Error?)->())?
     
     init(with trustedServerCertificates: [PinningCertificateContainer]) {
         self.trustedServerCertificates = trustedServerCertificates
@@ -20,7 +23,7 @@ internal class NetworkingDelegate : NSObject, URLSessionTaskDelegate, URLSession
     }
 }
 
-extension NetworkingDelegate {
+extension NetworkingDelegate : URLSessionDelegate {
     
     public var pinCertificatesEnabled: Bool {
         return trustedServerCertificates.count > 0
@@ -60,9 +63,35 @@ extension NetworkingDelegate {
         }
     }
     
+    func urlSession(_ session: URLSession, didBecomeInvalidWithError error: Error?) {
+        guard let handler = sessionInvalidationHandler else {
+            return
+        }
+        handler(error)
+    }
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
+        
+        var redirectedRequest: URLRequest? = request
+        
+        defer {
+            completionHandler(redirectedRequest)
+        }
+        
+        guard let handler = redirectionHandler else {
+            return
+        }
+        
+        redirectedRequest = handler(response, request)
+    }
 }
 
-extension NetworkingDelegate  {
+extension NetworkingDelegate : URLSessionTaskDelegate {
+    
+    
+    func urlSession(_ session: URLSession, task: URLSessionTask, didSendBodyData bytesSent: Int64, totalBytesSent: Int64, totalBytesExpectedToSend: Int64) {
+        // TODO: upload progress
+    }
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
         guard let finishedRequestIndex = pendingRequests.index(where: { $0.associatedSessionTask == task }) else {
@@ -70,15 +99,30 @@ extension NetworkingDelegate  {
         }
         pendingRequests.remove(at: finishedRequestIndex)
     }
+}
+
+extension NetworkingDelegate : URLSessionDataDelegate {
+    
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        guard let request = pendingRequests.first(where: { $0.associatedSessionTask == dataTask } ) else {
+            return
+        }
+        
+        Networking.responseQueue.async {
+            if let response = dataTask.response as? HTTPURLResponse {
+                request.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: data)))
+            } else {
+                fatalError("Lazy programmist") //TODO: FIXME: to complete
+                //                responsePromise.send(.fail(with:Error.noErrorOrResponse))
+            }
+        }
+    }
+}
+
+extension NetworkingDelegate : URLSessionDownloadDelegate {
     
     func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didResumeAtOffset fileOffset: Int64, expectedTotalBytes: Int64) {
         // TODO: to complete
-    }
-    
-    func urlSession(_ session: URLSession, task: URLSessionTask, willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest, completionHandler: @escaping (URLRequest?) -> Void) {
-        // TODO: to complete
-        
-        completionHandler(request)
     }
     
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
@@ -92,8 +136,7 @@ extension NetworkingDelegate  {
         }
         
         do {
-            try FileManager.default.createDirectory(at: destination, withIntermediateDirectories: true, attributes: nil)
-            try Data(contentsOf: location).write(to: destination)
+            try Data(contentsOf: location).write(to: destination, options: .atomicWrite)
         } catch {
             Networking.responseQueue.async {
                 downloadRequest.responsePromise?.send(.fail(with:error))
@@ -102,11 +145,15 @@ extension NetworkingDelegate  {
         }
         
         Networking.responseQueue.async {
-            if let response = downloadTask.response as? HTTPURLResponse, let data = try? Data(contentsOf: destination) {
+            guard let response = downloadTask.response as? HTTPURLResponse else {
+                downloadRequest.responsePromise?.send(.fail(with:Networking.Error.invalidResponse))
+                return
+            }
+            do {
+                let data = try Data(contentsOf: destination)
                 downloadRequest.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: data)))
-            } else {
-                fatalError("Lazy programmist") //TODO: FIXME: to complete
-                //                responsePromise.send(.fail(with:Error.noErrorOrResponse))
+            } catch {
+                downloadRequest.responsePromise?.send(.fail(with:error))
             }
         }
     }
@@ -119,10 +166,10 @@ extension NetworkingDelegate  {
         let progressValue = Progress(totalUnitCount: 0)
         progressValue.totalUnitCount = totalBytesExpectedToWrite
         progressValue.completedUnitCount = totalBytesWritten
-        downloadRequest.responsePromise?.send(.progress(value: progressValue))
+        Networking.responseQueue.async {
+            downloadRequest.responsePromise?.send(.progress(value: progressValue))
+        }
     }
-    
-    
 }
 
 extension SecTrust {
