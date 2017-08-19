@@ -44,6 +44,7 @@ enum SampleService {
     case downloadData
 }
 
+// conform to service protocol to define all needed data
 extension SampleService : NetworkService {
     
     var path: String {
