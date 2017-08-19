@@ -10,9 +10,11 @@ import Foundation
 
 internal class NetworkingDelegate : NSObject  {
     
+    internal static let validHTTPCodes = 200..<400
+    
     let trustedServerCertificates: [PinningCertificateContainer]
     
-    internal var pendingRequests = [NetworkRequest]()
+    internal var pendingRequests = [Int:NetworkRequest]()
     
     internal var redirectionHandler: ((HTTPURLResponse, URLRequest)->URLRequest?)?
     internal var sessionInvalidationHandler: ((Error?)->())?
@@ -99,62 +101,68 @@ extension NetworkingDelegate : URLSessionDelegate {
 extension NetworkingDelegate : URLSessionTaskDelegate {
     
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        if let error = error, let failedRequest = pendingRequests.first(where: { $0.associatedSessionTask == task }) {
-            Networking.responseQueue.async {
-                failedRequest.responsePromise?.send(.fail(with:error))
-            }
-        }
-        guard let finishedRequestIndex = pendingRequests.index(where: { $0.associatedSessionTask == task }) else {
+        guard let request = pendingRequests[task.taskIdentifier] else {
             return
         }
-        pendingRequests.remove(at: finishedRequestIndex)
+        defer {
+            pendingRequests[task.taskIdentifier] = nil
+        }
+        if let error = error, let failedRequest = pendingRequests[task.taskIdentifier] {
+            failedRequest.responsePromise?.send(.fail(with:error))
+        } else if let response = task.response as? HTTPURLResponse, !(NetworkingDelegate.validHTTPCodes).contains(response.statusCode) {
+            request.responsePromise?.send(.fail(with:Networking.Error.statusCode(response.statusCode)))
+        }
     }
     
     public func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge, completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Swift.Void) {
         urlSession(session, didReceive: challenge, completionHandler: completionHandler) // TODO: to check
     }
     
-    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Swift.Void) {
-        defer {
-            completionHandler(.allow)
-        }
-        guard let response = response as? HTTPURLResponse else {
-            return
-        }
-        
-        guard !(200..<400).contains(response.statusCode) else {
-            return
-        }
-        
-        guard let request = pendingRequests.first(where: { $0.associatedSessionTask == dataTask } ) else {
-            return
-        }
-        print(response.statusCode)
-        Networking.responseQueue.async {
-            request.responsePromise?.send(.fail(with:Networking.Error.statusCode(response.statusCode)))
-        }
-        
-    }
+    //    public func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse, completionHandler: @escaping (URLSession.ResponseDisposition) -> Swift.Void) {
+    //        defer {
+    //            completionHandler(.allow)
+    //        }
+    //        guard let response = response as? HTTPURLResponse else {
+    //            return
+    //        }
+    //
+    //        guard !(200..<400).contains(response.statusCode) else {
+    //            return
+    //        }
+    //
+    //        guard let request = pendingRequests.first(where: { $0.associatedSessionTask == dataTask } ) else {
+    //            return
+    //        }
+    //
+    ////        Networking.responseQueue.async {
+    //            request.responsePromise?.send(.fail(with:Networking.Error.statusCode(response.statusCode)))
+    ////        }
+    //
+    //    }
 }
 
 extension NetworkingDelegate : URLSessionDataDelegate {
     
     func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
-        guard dataTask.state == .running else {
+        //        guard dataTask.state == .running else {
+        //            return
+        //        }
+        
+        guard let request = pendingRequests[dataTask.taskIdentifier] else {
             return
         }
         
-        guard let request = pendingRequests.first(where: { $0.associatedSessionTask == dataTask } ) else {
-            return
-        }
-        
-        Networking.responseQueue.async {
-            if let response = dataTask.response as? HTTPURLResponse {
+        //        Networking.responseQueue.async {
+        if let response = dataTask.response as? HTTPURLResponse {
+            if (NetworkingDelegate.validHTTPCodes).contains(response.statusCode) {
                 request.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: data)))
             } else {
-                request.responsePromise?.send(.fail(with:Networking.Error.invalidResponse))
+                request.responsePromise?.send(.fail(with:Networking.Error.statusCode(response.statusCode)))
             }
+        } else {
+            request.responsePromise?.send(.fail(with:Networking.Error.invalidResponse))
         }
+        //        }
     }
 }
 
@@ -165,8 +173,8 @@ extension NetworkingDelegate : URLSessionDownloadDelegate {
     }
     
     public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didFinishDownloadingTo location: URL) {
-
-        guard let downloadRequest = pendingRequests.first(where: { $0.associatedSessionTask == downloadTask } ) else {
+        
+        guard let downloadRequest = pendingRequests[downloadTask.taskIdentifier] else {
             return
         }
         
@@ -177,36 +185,36 @@ extension NetworkingDelegate : URLSessionDownloadDelegate {
         do {
             try Data(contentsOf: location).write(to: destination, options: .atomicWrite)
         } catch {
-            Networking.responseQueue.async {
-                downloadRequest.responsePromise?.send(.fail(with:error))
-            }
+            //            Networking.responseQueue.async {
+            downloadRequest.responsePromise?.send(.fail(with:error))
+            //            }
             return
         }
         
-        Networking.responseQueue.async {
-            guard let response = downloadTask.response as? HTTPURLResponse else {
-                downloadRequest.responsePromise?.send(.fail(with:Networking.Error.invalidResponse))
-                return
-            }
-            do {
-                let data = try Data(contentsOf: destination)
-                downloadRequest.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: data)))
-            } catch {
-                downloadRequest.responsePromise?.send(.fail(with:error))
-            }
+        //        Networking.responseQueue.async {
+        guard let response = downloadTask.response as? HTTPURLResponse else {
+            downloadRequest.responsePromise?.send(.fail(with:Networking.Error.invalidResponse))
+            return
         }
+        do {
+            let data = try Data(contentsOf: destination)
+            downloadRequest.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: data)))
+        } catch {
+            downloadRequest.responsePromise?.send(.fail(with:error))
+        }
+        //        }
     }
     
     @objc public func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
         
-        guard let downloadRequest = pendingRequests.first(where: { $0.associatedSessionTask == downloadTask } ) else {
+        guard let downloadRequest = pendingRequests[downloadTask.taskIdentifier] else {
             return
         }
         let progressValue = Progress(totalUnitCount: totalBytesExpectedToWrite)
         progressValue.completedUnitCount = totalBytesWritten
-        Networking.responseQueue.async {
-            downloadRequest.responsePromise?.send(.progress(value: progressValue))
-        }
+        //        Networking.responseQueue.async {
+        downloadRequest.responsePromise?.send(.progress(value: progressValue))
+        //        }
     }
 }
 

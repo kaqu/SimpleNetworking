@@ -10,7 +10,8 @@ import Foundation
 
 public class FailablePromise<T> {
     
-    fileprivate var semaphore: DispatchSemaphore = DispatchSemaphore(value: 0)
+//    fileprivate var semaphore: DispatchSemaphore = DispatchSemaphore(value: 0)
+    fileprivate var dispatchGroup: DispatchGroup = DispatchGroup()
     
     fileprivate var transformCompletion: ((T?, Error?)->())? {
         didSet {
@@ -64,15 +65,14 @@ public class FailablePromise<T> {
     fileprivate var progressHandler: (DispatchQueue, (Progress)->())?
     
     fileprivate var state: State = .waiting {
-        willSet {
-            checkStateChange(from: state, to: newValue)
-        }
         didSet {
+            defer {
+                dispatchGroup.leave()
+            }
             switch state {
             case .waiting:
                 break
             case let .fulfilled(value):
-                semaphore.signal()
                 if let (queue, handler) = fulfillHandler {
                     queue.async {
                         handler(value)
@@ -80,7 +80,6 @@ public class FailablePromise<T> {
                 }
                 transformCompletion?(value, nil)
             case let .failed(error):
-                semaphore.signal()
                 if let (queue, handler) = failureHandler {
                     queue.async {
                         handler(error)
@@ -88,17 +87,21 @@ public class FailablePromise<T> {
                 }
                 transformCompletion?(nil, error)
             }
-            
+//            dispatchGroup.notify(queue: DispatchQueue.global(qos: .background)) {
+//                print("All async calls were run!")
+//            }
         }
     }
     
     public init() {
         self.trensformedPromiseRef = nil
+        self.dispatchGroup.enter()
     }
     
     private let trensformedPromiseRef: AnyObject?
     
     private init<A>(transforming promise: FailablePromise<A>, with transform: @escaping (A)->TransformationResult) {
+        self.dispatchGroup.enter()
         self.trensformedPromiseRef = promise
         promise.transformCompletion = { [weak self] value, error in
             if let error = error {
@@ -165,14 +168,15 @@ extension FailablePromise {
 extension FailablePromise {
     
     internal func send(_ message: Message) {
-        guard case .waiting = state else {
+        guard case .waiting = self.state else {
+            print("WARN - cannot apply \(message) - messages accepted ony before fulfilled or failed - current: \(self.state)")
             return
         }
         switch message {
         case let .fulfill(data):
             self.state = .fulfilled(value:data)
         case let .progress(value):
-            if let (queue, handler) = progressHandler {
+            if let (queue, handler) = self.progressHandler {
                 queue.async {
                     handler(value)
                 }
@@ -186,9 +190,39 @@ extension FailablePromise {
 
 extension FailablePromise {
     
-    public var value: T? {
+    public var completed: Bool {
         if case .waiting = state {
-            semaphore.wait()
+            return false
+        } else {
+            return true
+        }
+    }
+    
+    public var value: T? {
+        if !completed {
+            dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {
+                print("All async calls were run!")
+            }
+            dispatchGroup.wait()
+        }
+        if case let .fulfilled(value) = state {
+            return value
+        } else if case .failed = state {
+            return nil
+        } else {
+            fatalError("Internal inconsitency - waiting promise trying to return value ignoring semaphore")
+        }
+    }
+    
+    public func valueWithTimeout(_ timeout: Double) -> T? {
+        if !completed {
+            dispatchGroup.notify(queue: DispatchQueue.global(qos: .utility)) {
+                print("All async calls were run!")
+            }
+            let waitResult = dispatchGroup.wait(timeout: DispatchTime.now() + timeout)
+            if case .timedOut = waitResult {
+                return nil
+            }
         }
         if case let .fulfilled(value) = state {
             return value
@@ -204,28 +238,7 @@ extension FailablePromise {
     
     fileprivate func checkStateChange(from: State, to: State) {
         guard case .waiting = from else {
-            fatalError("Internal inconsitency - promise can't change state in not waiting")
+            fatalError("Internal inconsitency - promise can't change state if not waiting - current:\(state)")
         }
-//            fatalError("Internal inconsitency - promise can't start waiting")
-//            if case .fulfilled = from {
-//                fatalError("Internal inconsitency - promise can't wait when already fulfilled or failed")
-//            } else if case .failed = from {
-//                fatalError("Internal inconsitency - promise can't wait when already fulfilled or failed")
-//            } else {
-//                fatalError("Internal inconsitency - promise can't start wait when already waiting")
-//            }
-//        } else if case .fulfilled = to {
-//            if case .failed = from {
-//                fatalError("Internal inconsitency - promise can't fail when already fulfilled")
-//            } else if case .fulfilled = from {
-//                fatalError("Internal inconsitency - promise can't fulfill when already fulfilled")
-//            }
-//        } else if case .failed = to {
-//            if case .fulfilled = from {
-//                fatalError("Internal inconsitency - promise can't fulfill when already failed")
-//            } else if case .failed = from {
-//                fatalError("Internal inconsitency - promise can't fail when already failed")
-//            }
-//        }
     }
 }

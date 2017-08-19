@@ -26,23 +26,35 @@ class NetworkingTest: XCTestCase {
     }
     
     func testSuccessStatusCodes() {
-        for code in 200..<400 {
-            guard let response = networking.perform(.get(from: testBaseAddress + "/status/\(code)")).value else {
+        let semaphore = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            let code = 200
+            //        for code in 200..<400 {
+            guard let response = self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value else {
                 XCTAssert(false, "No response from network!")
                 return
             }
             XCTAssert(response.statusCode == code, "Network response not OK - status: \(response.statusCode)")
+            //
+            semaphore.signal()
         }
+        XCTAssert(.success == semaphore.wait(timeout: .now() + 5), "Not in time - possible deadlock or fail")
     }
     
+    
     func testErrorStatusCodes() {
-        for code in 100..<200 {
-            XCTAssert(nil == networking.perform(.get(from: testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
+        let semaphore = DispatchSemaphore(value: 0)
+        DispatchQueue.global().async {
+            for code in 100..<200 {
+                XCTAssert(nil == self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
+            }
+            
+            for code in 400..<600 {
+                XCTAssert(nil == self.networking.perform(.get(from: self.testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
+            }
+            semaphore.signal()
         }
-        
-        for code in 400..<600 {
-            XCTAssert(nil == networking.perform(.get(from: testBaseAddress + "/status/\(code)")).value, "Network responded while should not")
-        }
+        XCTAssert(.success == semaphore.wait(timeout: .now() + 5), "Not in time - possible deadlock or fail")
     }
     
     func testGETRequest() {

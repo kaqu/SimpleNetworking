@@ -128,7 +128,7 @@ class PromiseTest: XCTestCase {
         XCTAssert(promise.value == nil, "Transformed promise value not fulfilled")
     }
     
-    func testTransformInstantCallbackFulfillValue() {
+    func testMessageBeforeTransformInstantCallbackFulfillValue() {
         let parentPromise = FailablePromise<Void>()
         parentPromise.send(.fulfill(with: ()))
         let promise = parentPromise.transform { _ in return .success(with:()) }
@@ -139,10 +139,32 @@ class PromiseTest: XCTestCase {
         XCTAssert(.success == semaphore.wait(timeout: .now() + 1), "Not in time - possible deadlock or fail")
     }
     
-    func testTransformInstantCallbackFailValue() {
+    func testMessageBeforeTransformInstantCallbackFailValue() {
         let parentPromise = FailablePromise<Void>()
         parentPromise.send(.fail(with: "FAIL"))
         let promise = parentPromise.transform { _ in return .success(with:()) }
+        promise.failureHandler(on: DispatchQueue.global()) { _ in
+            self.semaphore.signal()
+        }
+        
+        XCTAssert(.success == semaphore.wait(timeout: .now() + 1), "Not in time - possible deadlock or fail")
+    }
+    
+    func testMessageAfterTransformInstantCallbackFulfillValue() {
+        let parentPromise = FailablePromise<Void>()
+        let promise = parentPromise.transform { _ in return .success(with:()) }
+        parentPromise.send(.fulfill(with: ()))
+        promise.fulfillmentHandler(on: DispatchQueue.global()) { _ in
+            self.semaphore.signal()
+        }
+        
+        XCTAssert(.success == semaphore.wait(timeout: .now() + 1), "Not in time - possible deadlock or fail")
+    }
+    
+    func testMessageAfterTransformInstantCallbackFailValue() {
+        let parentPromise = FailablePromise<Void>()
+        let promise = parentPromise.transform { _ in return .success(with:()) }
+        parentPromise.send(.fail(with: "FAIL"))
         promise.failureHandler(on: DispatchQueue.global()) { _ in
             self.semaphore.signal()
         }
@@ -175,17 +197,14 @@ class PromiseTest: XCTestCase {
         }
         
         self.measure {
-            DispatchQueue.global(qos: .userInitiated).sync {
-                for completed in 0...count {
-                    let progress = Progress(totalUnitCount: count)
-                    progress.completedUnitCount = completed
-                    promise.send(.progress(value: progress))
-                    self.semaphore.wait()
-                }
+            for completed in 0...count {
+                let progress = Progress(totalUnitCount: count)
+                progress.completedUnitCount = completed
+                promise.send(.progress(value: progress))
+                XCTAssert(.success == self.semaphore.wait(timeout: .now() + 1), "Not in time - possible deadlock or fail")
             }
-            promise.send(.fulfill(with: ()))
         }
-        
+        promise.send(.fulfill(with: ()))
         promise.value // locks thread until complete
         XCTAssert(progressRecived, "Progress not recived")
     }
@@ -201,17 +220,14 @@ class PromiseTest: XCTestCase {
         }
         
         self.measure {
-            DispatchQueue.global(qos: .userInitiated).sync {
-                for completed in 0...count {
-                    let progress = Progress(totalUnitCount: count)
-                    progress.completedUnitCount = completed
-                    parentPromise.send(.progress(value: progress))
-                    self.semaphore.wait()
-                }
+            for completed in 0...count {
+                let progress = Progress(totalUnitCount: count)
+                progress.completedUnitCount = completed
+                parentPromise.send(.progress(value: progress))
+                XCTAssert(.success == self.semaphore.wait(timeout: .now() + 1), "Not in time - possible deadlock or fail")
             }
-            parentPromise.send(.fulfill(with: ()))
         }
-        
+        parentPromise.send(.fulfill(with: ()))
         promise.value // locks thread until complete
         XCTAssert(progressRecived, "Progress not recived")
     }

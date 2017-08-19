@@ -111,8 +111,8 @@
 			isa = PBXGroup;
 			children = (
 				4093E85E1F4437E500CA2E82 /* Networking.swift */,
-				4093E8741F4451F600CA2E82 /* NetworkRequest.swift */,
 				4093E8781F4486C800CA2E82 /* NetworkingDelegate.swift */,
+				4093E8741F4451F600CA2E82 /* NetworkRequest.swift */,
 				40D15E711F4497E60071F001 /* NetworkResponse.swift */,
 			);
 			name = Core;

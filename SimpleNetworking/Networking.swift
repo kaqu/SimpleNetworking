@@ -17,9 +17,8 @@ public final class Networking {
     public let session: URLSession
     internal let delegate: NetworkingDelegate
     
-//    static let networkingQueue: DispatchQueue = DispatchQueue(label: "Networking-RequestQueue", qos: .default)
     static let requestQueue: DispatchQueue = DispatchQueue(label: "Networking-RequestQueue", qos: .default, attributes: .concurrent)
-    static let responseQueue: DispatchQueue = DispatchQueue(label: "Networking-ResponseQueue", qos: .default, attributes: .concurrent)
+//    static let responseQueue: DispatchQueue = DispatchQueue(label: "Networking-ResponseQueue", qos: .default, attributes: .concurrent)
     
     public init(withTrustedServerCertificates trustedServerCertificates: [PinningCertificateContainer] = []) {
         self.delegate = NetworkingDelegate(with:trustedServerCertificates)
@@ -38,12 +37,11 @@ public final class Networking {
 
 extension Networking {
     
-    public func perform(_ task: NetworkRequest.Task, with headers: NetworkRequest.Headers = [:], respondingOn respondQueue: DispatchQueue = Networking.responseQueue) -> FailablePromise<NetworkResponse> {
-        return perform(request: NetworkRequest(task, with: headers), respondingOn: respondQueue)
+    public func perform(_ task: NetworkRequest.Task, with headers: NetworkRequest.Headers = [:]/*, respondingOn respondQueue: DispatchQueue = Networking.responseQueue*/) -> FailablePromise<NetworkResponse> {
+        return perform(request: NetworkRequest(task, with: headers)/*, respondingOn: respondQueue*/)
     }
     
-    
-    public func perform(request: NetworkRequest, respondingOn responseQueue: DispatchQueue = Networking.responseQueue) -> FailablePromise<NetworkResponse> {
+    public func perform(request: NetworkRequest/*, respondingOn responseQueue: DispatchQueue = Networking.responseQueue*/) -> FailablePromise<NetworkResponse> {
         
         let responsePromise = FailablePromise<NetworkResponse>()
         Networking.requestQueue.async {
@@ -56,7 +54,7 @@ extension Networking {
                 task = self.session.dataTask(with: request.urlRequest)
             }
             request.associatedSessionTask = task
-            self.delegate.pendingRequests.append(request)
+            self.delegate.pendingRequests[task.taskIdentifier] = request
             task.resume()
         }
         return responsePromise

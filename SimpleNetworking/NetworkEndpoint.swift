@@ -33,14 +33,14 @@ extension NetworkEndpoint {
         return basePath.appending("\(service.path)")
     }
     
-    public func call(_ service: NetworkService, respondingOn responseQueue: DispatchQueue = Networking.responseQueue) -> FailablePromise<NetworkResponse> {
+    public func call(_ service: NetworkService/*, respondingOn responseQueue: DispatchQueue = Networking.responseQueue*/) -> FailablePromise<NetworkResponse> {
         switch service.task {
         case .get:
-            return networking.perform(.get(from: fullServicePath(service)), with: service.headers, respondingOn: responseQueue)
+            return networking.perform(.get(from: fullServicePath(service)), with: service.headers/*, respondingOn: responseQueue*/)
         case let .post(data, contentType):
-            return networking.perform(.post(data: data, type: contentType, to: fullServicePath(service)), with: service.headers, respondingOn: responseQueue)
+            return networking.perform(.post(data: data, type: contentType, to: fullServicePath(service)), with: service.headers/*, respondingOn: responseQueue*/)
         case let .download(destination):
-            return networking.perform(.download(from: fullServicePath(service), savingTo: destination), with: service.headers, respondingOn: responseQueue)
+            return networking.perform(.download(from: fullServicePath(service), savingTo: destination), with: service.headers/*, respondingOn: responseQueue*/)
         }
     }
 }
