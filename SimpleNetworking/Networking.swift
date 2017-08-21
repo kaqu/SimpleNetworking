@@ -18,7 +18,6 @@ public final class Networking {
     internal let delegate: NetworkingDelegate
     
     static let requestQueue: DispatchQueue = DispatchQueue(label: "Networking-RequestQueue", qos: .default, attributes: .concurrent)
-//    static let responseQueue: DispatchQueue = DispatchQueue(label: "Networking-ResponseQueue", qos: .default, attributes: .concurrent)
     
     public init(withTrustedServerCertificates trustedServerCertificates: [PinningCertificateContainer] = []) {
         self.delegate = NetworkingDelegate(with:trustedServerCertificates)
@@ -37,11 +36,11 @@ public final class Networking {
 
 extension Networking {
     
-    public func perform(_ task: NetworkRequest.Task, with headers: NetworkRequest.Headers = [:]/*, respondingOn respondQueue: DispatchQueue = Networking.responseQueue*/) -> FailablePromise<NetworkResponse> {
-        return perform(request: NetworkRequest(task, with: headers)/*, respondingOn: respondQueue*/)
+    public func perform(_ task: NetworkRequest.Task, with headers: NetworkRequest.Headers = [:]) -> FailablePromise<NetworkResponse> {
+        return perform(request: NetworkRequest(task, with: headers))
     }
     
-    public func perform(request: NetworkRequest/*, respondingOn responseQueue: DispatchQueue = Networking.responseQueue*/) -> FailablePromise<NetworkResponse> {
+    public func perform(request: NetworkRequest) -> FailablePromise<NetworkResponse> {
         
         let responsePromise = FailablePromise<NetworkResponse>()
         Networking.requestQueue.async {
@@ -72,6 +71,11 @@ extension Networking {
         }
     }
     
+    public func withRedirectionHandler(_ handler: ((HTTPURLResponse, URLRequest)->URLRequest?)?) -> Self {
+        delegate.redirectionHandler = handler
+        return self
+    }
+    
     public var sessionInvalidationHandler: ((Swift.Error?)->())? {
         get {
             return delegate.sessionInvalidationHandler
@@ -79,6 +83,25 @@ extension Networking {
         set {
             delegate.sessionInvalidationHandler = newValue
         }
+    }
+    
+    public func withSessionInvalidationHandler(_ handler: ((Swift.Error?)->())?) -> Self {
+        delegate.sessionInvalidationHandler = handler
+        return self
+    }
+    
+    public var validateResponseStatusCodes: Bool {
+        get {
+            return delegate.validateResponseStatusCodes
+        }
+        set {
+            delegate.validateResponseStatusCodes = newValue
+        }
+    }
+    
+    public func withResponseStatusCodeValidation(_ validate: Bool) -> Self {
+        delegate.validateResponseStatusCodes = validate
+        return self
     }
 }
 

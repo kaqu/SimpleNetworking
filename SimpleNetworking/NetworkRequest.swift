@@ -14,6 +14,7 @@ public struct NetworkRequest {
         case get(from: String)
         case post(data: Data, type: NetworkRequest.ContentType, to: String)
         case download(from: String, savingTo: URL)
+//        case downloadWithoutSaving(from: String)
 //        case upload(data: Data, to: String)
     }
     
