@@ -111,6 +111,10 @@ extension NetworkingDelegate : URLSessionTaskDelegate {
             failedRequest.responsePromise?.send(.fail(with:error))
         } else if let response = task.response as? HTTPURLResponse, !(NetworkingDelegate.validHTTPCodes).contains(response.statusCode) {
             request.responsePromise?.send(.fail(with:Networking.Error.statusCode(response.statusCode)))
+        } else if let response = task.response as? HTTPURLResponse {
+            request.responsePromise?.send(.fulfill(with:NetworkResponse(response: response, data: Data())))
+        } else {
+            request.responsePromise?.send(.fail(with:Networking.Error.noErrorOrResponse))
         }
     }
     
