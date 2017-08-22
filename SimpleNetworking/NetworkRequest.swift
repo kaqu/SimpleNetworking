@@ -27,7 +27,7 @@ public struct NetworkRequest {
     public let urlRequest: URLRequest
     public let task: Task
     internal var associatedSessionTask: URLSessionTask? = nil
-    internal var responsePromise: FailablePromise<NetworkResponse>?
+    internal weak var responsePromise: FailablePromise<NetworkResponse>?
     
     public init(_ task: Task, with headers: NetworkRequest.Headers = [:]) {
         self.task = task

@@ -120,6 +120,12 @@ public class FailablePromise<PromiseType> {
         dispatchGroup.notify(queue: .global()) {}
     }
     
+    deinit {
+        if !completed {
+            dispatchGroup.leave() // TODO: to test - unlock waiting thread when deallocationg and no response yet
+        }
+    }
+    
     public func transform<A>(with transform: @escaping (PromiseType)->(FailablePromise<A>.TransformationResult)) -> FailablePromise<A> {
         return FailablePromise<A>(transforming: self, with: transform)
     }
