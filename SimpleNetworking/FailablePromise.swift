@@ -8,11 +8,11 @@
 
 import Foundation
 
-public class FailablePromise<T> {
+public class FailablePromise<PromiseType> {
     
     fileprivate var dispatchGroup: DispatchGroup = DispatchGroup()
     
-    fileprivate var transformCompletion: ((T?, Error?)->())? {
+    fileprivate var transformCompletion: ((PromiseType?, Error?)->())? {
         didSet {
             switch state {
             case .waiting:
@@ -27,7 +27,7 @@ public class FailablePromise<T> {
     
     fileprivate var transformProgress: ((Progress)->())?
     
-    fileprivate var fulfillHandler: (DispatchQueue, (T)->())? {
+    fileprivate var fulfillHandler: (DispatchQueue, (PromiseType)->())? {
         didSet {
             switch state {
             case .waiting:
@@ -120,23 +120,23 @@ public class FailablePromise<T> {
         dispatchGroup.notify(queue: .global()) {}
     }
     
-    public func transform<A>(with transform: @escaping (T)->(FailablePromise<A>.TransformationResult)) -> FailablePromise<A> {
+    public func transform<A>(with transform: @escaping (PromiseType)->(FailablePromise<A>.TransformationResult)) -> FailablePromise<A> {
         return FailablePromise<A>(transforming: self, with: transform)
     }
     
     indirect public enum TransformationResult {
-        case success(with: T)
+        case success(with: PromiseType)
         case failure(reason: Error)
     }
     
     indirect internal enum State {
         case waiting
-        case fulfilled(value: T)
+        case fulfilled(value: PromiseType)
         case failed(reason: Error)
     }
     
     indirect internal enum Message {
-        case fulfill(with: T)
+        case fulfill(with: PromiseType)
         case progress(value: Progress)
         case fail(with: Error)
     }
@@ -145,7 +145,7 @@ public class FailablePromise<T> {
 extension FailablePromise {
     
     @discardableResult
-    public func fulfillmentHandler(on queue: DispatchQueue = .main, withHandler handler: @escaping (T)->()) -> Self {
+    public func fulfillmentHandler(on queue: DispatchQueue = .main, withHandler handler: @escaping (PromiseType)->()) -> Self {
         self.fulfillHandler = (queue, handler)
         return self
     }
@@ -196,7 +196,7 @@ extension FailablePromise {
         }
     }
     
-    public var value: T? {
+    public var value: PromiseType? {
         if !completed {
             dispatchGroup.wait()
         }
@@ -209,7 +209,7 @@ extension FailablePromise {
         }
     }
     
-    public func valueWithTimeout(_ timeout: Double) -> T? {
+    public func valueWithTimeout(_ timeout: Double) -> PromiseType? {
         if !completed {
             let waitResult = dispatchGroup.wait(timeout: DispatchTime.now() + timeout)
             if case .timedOut = waitResult {
@@ -232,5 +232,20 @@ extension FailablePromise {
         guard case .waiting = from else {
             fatalError("Internal inconsitency - promise can't change state if not waiting - current:\(state)")
         }
+    }
+}
+
+extension FailablePromise where PromiseType == NetworkResponse {
+    
+    public func jsonTransform<DecodedType: Decodable>(to decodeType: DecodedType.Type) -> FailablePromise<DecodedType> {
+        return FailablePromise<DecodedType>(transforming: self, with: { response in
+            guard let data = response.data else {
+                return .failure(reason: Networking.Error.noData)
+            }
+            guard let decoded = try? JSONDecoder().decode(DecodedType.self, from: data) else {
+                return .failure(reason: Networking.Error.invalidResponse)
+            }
+            return .success(with: decoded)
+        })
     }
 }

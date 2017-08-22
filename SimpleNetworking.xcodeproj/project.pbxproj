@@ -76,6 +76,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		4059AC0A1F4B1975001C3A3B /* Serialization */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Serialization;
+			sourceTree = "<group>";
+		};
 		4093E8461F44372000CA2E82 = {
 			isa = PBXGroup;
 			children = (
@@ -97,6 +104,7 @@
 		4093E8521F44372000CA2E82 /* SimpleNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				4059AC0A1F4B1975001C3A3B /* Serialization */,
 				40DB2E501F46EBBC000740A0 /* Service */,
 				40D15E6E1F4497A70071F001 /* Promise */,
 				4093E8601F44387100CA2E82 /* Security */,
@@ -423,7 +431,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.0;
 			};
 			name = Debug;
 		};
@@ -443,7 +451,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.kaqu.SimpleNetworking;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
-				SWIFT_VERSION = 3.0;
+				SWIFT_VERSION = 4.0;
 			};
 			name = Release;
 		};
