@@ -2,6 +2,8 @@
 
 Simple swift networking returning promises instead of just getting callbacks
 
+Swift 4 required!
+
 ## Sample usage
 
 ```swift
@@ -109,3 +111,13 @@ testEndpoint.call(SampleService.downloadData)
 .value
 
 ```
+
+Fastest way to use by
+```bash
+git clone git@github.com:kaqu/SimpleNetworking.git
+```
+or
+```bash
+git submodule add git@github.com:kaqu/SimpleNetworking.git
+```
+in existing git repository.
