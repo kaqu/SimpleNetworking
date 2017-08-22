@@ -12,6 +12,7 @@
 		40149E301F48621100939DD3 /* PromiseTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40149E2F1F48621100939DD3 /* PromiseTest.swift */; };
 		40149E321F486D6100939DD3 /* NetworkingTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40149E311F486D6100939DD3 /* NetworkingTest.swift */; };
 		40149E341F489F1E00939DD3 /* pinningCert.cer in Resources */ = {isa = PBXBuildFile; fileRef = 40149E331F489F1E00939DD3 /* pinningCert.cer */; };
+		4059AC111F4C16E5001C3A3B /* NetworkingSerialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4059AC101F4C16E5001C3A3B /* NetworkingSerialization.swift */; };
 		4093E8551F44372000CA2E82 /* SimpleNetworking.h in Headers */ = {isa = PBXBuildFile; fileRef = 4093E8531F44372000CA2E82 /* SimpleNetworking.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4093E85F1F4437E500CA2E82 /* Networking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E85E1F4437E500CA2E82 /* Networking.swift */; };
 		4093E8621F44387E00CA2E82 /* CertificateContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E8611F44387E00CA2E82 /* CertificateContainer.swift */; };
@@ -41,6 +42,7 @@
 		40149E2F1F48621100939DD3 /* PromiseTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromiseTest.swift; sourceTree = "<group>"; };
 		40149E311F486D6100939DD3 /* NetworkingTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkingTest.swift; sourceTree = "<group>"; };
 		40149E331F489F1E00939DD3 /* pinningCert.cer */ = {isa = PBXFileReference; lastKnownFileType = file; path = pinningCert.cer; sourceTree = "<group>"; };
+		4059AC101F4C16E5001C3A3B /* NetworkingSerialization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkingSerialization.swift; sourceTree = "<group>"; };
 		4093E8501F44372000CA2E82 /* SimpleNetworking.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SimpleNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4093E8531F44372000CA2E82 /* SimpleNetworking.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SimpleNetworking.h; sourceTree = "<group>"; };
 		4093E8541F44372000CA2E82 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -79,6 +81,7 @@
 		4059AC0A1F4B1975001C3A3B /* Serialization */ = {
 			isa = PBXGroup;
 			children = (
+				4059AC101F4C16E5001C3A3B /* NetworkingSerialization.swift */,
 			);
 			name = Serialization;
 			sourceTree = "<group>";
@@ -287,6 +290,7 @@
 				4093E8791F4486C800CA2E82 /* NetworkingDelegate.swift in Sources */,
 				4093E8751F4451F600CA2E82 /* NetworkRequest.swift in Sources */,
 				40D15E721F4497E60071F001 /* NetworkResponse.swift in Sources */,
+				4059AC111F4C16E5001C3A3B /* NetworkingSerialization.swift in Sources */,
 				40DB2E521F470D14000740A0 /* NetworkService.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

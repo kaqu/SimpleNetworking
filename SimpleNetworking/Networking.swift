@@ -18,6 +18,8 @@ public final class Networking {
     internal let delegate: NetworkingDelegate
     
     static let requestQueue: DispatchQueue = DispatchQueue(label: "Networking-RequestQueue", qos: .default, attributes: .concurrent)
+    static let jsonEncoder = JSONEncoder()
+    static let jsonDecoder = JSONDecoder()
     
     public init(withTrustedServerCertificates trustedServerCertificates: [PinningCertificateContainer] = []) {
         self.delegate = NetworkingDelegate(with:trustedServerCertificates)

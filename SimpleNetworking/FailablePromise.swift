@@ -97,7 +97,7 @@ public class FailablePromise<PromiseType> {
     
     private let trensformedPromiseRef: AnyObject?
     
-    private init<A>(transforming promise: FailablePromise<A>, with transform: @escaping (A)->TransformationResult) {
+    internal init<A>(transforming promise: FailablePromise<A>, with transform: @escaping (A)->TransformationResult) {
         self.dispatchGroup.enter()
         self.trensformedPromiseRef = promise
         promise.transformCompletion = { [weak self] value, error in
@@ -232,20 +232,5 @@ extension FailablePromise {
         guard case .waiting = from else {
             fatalError("Internal inconsitency - promise can't change state if not waiting - current:\(state)")
         }
-    }
-}
-
-extension FailablePromise where PromiseType == NetworkResponse {
-    
-    public func jsonTransform<DecodedType: Decodable>(to decodeType: DecodedType.Type) -> FailablePromise<DecodedType> {
-        return FailablePromise<DecodedType>(transforming: self, with: { response in
-            guard let data = response.data else {
-                return .failure(reason: Networking.Error.noData)
-            }
-            guard let decoded = try? JSONDecoder().decode(DecodedType.self, from: data) else {
-                return .failure(reason: Networking.Error.invalidResponse)
-            }
-            return .success(with: decoded)
-        })
     }
 }
