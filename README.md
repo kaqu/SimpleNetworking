@@ -25,17 +25,17 @@ let networkResponsePromise = responsePromise.transform { response in
     return .success(with: response.response)
 }
 
-// asynchronus - called when promise fulfilled - need to manually switch queue if required, default is main
+// asynchronous - called when promise fulfilled - need to manually switch queue if required, default is main
 networkResponsePromise.fulfillmentHandler { response in
     print(response.statusCode)
 }
 
-// asynchronus - called when promise failed - need to manually switch queue if required, default is main
+// asynchronous - called when promise failed - need to manually switch queue if required, default is main
 networkResponsePromise.failureHandler { error in
     print(error)
 }
 
-// synchronus - locking thread until promise fulfilled or failed, then returns optional value - nil if failed
+// synchronous - locking thread until promise fulfilled or failed, then returns optional value - nil if failed
 // be sure if not waiting on same queue as provided in networking.perform othrvise can cause deadlocks
 let value = networkResponsePromise.value
 
