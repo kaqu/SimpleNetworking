@@ -1,8 +1,11 @@
 # SimpleNetworking
 
-Simple swift networking returning promises instead of just getting callbacks
+Simple swift networking returning promises instead of just getting callbacks.
+Good for anyone looking for alternative to alamofire or some nonconventional approach.
 
-Swift 4 required!
+It is like Alamofire combined with MOYA and PromiseKit, but a lot simpler!
+
+[Swift 4 required]
 
 ## Sample usage
 
