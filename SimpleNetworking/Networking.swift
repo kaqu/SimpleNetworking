@@ -32,6 +32,7 @@ public final class Networking {
         case invalidResponse
         case noData
         case cancelled
+        case serializationError(Swift.Error)
         case statusCode(Int)
     }
 }

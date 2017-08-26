@@ -12,6 +12,7 @@
 		40149E301F48621100939DD3 /* PromiseTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40149E2F1F48621100939DD3 /* PromiseTest.swift */; };
 		40149E321F486D6100939DD3 /* NetworkingTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40149E311F486D6100939DD3 /* NetworkingTest.swift */; };
 		40149E341F489F1E00939DD3 /* pinningCert.cer in Resources */ = {isa = PBXBuildFile; fileRef = 40149E331F489F1E00939DD3 /* pinningCert.cer */; };
+		40577FC31F4F38E70082ED75 /* RepeatablePromise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40577FC21F4F38E70082ED75 /* RepeatablePromise.swift */; };
 		4059AC111F4C16E5001C3A3B /* NetworkingSerialization.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4059AC101F4C16E5001C3A3B /* NetworkingSerialization.swift */; };
 		4093E8551F44372000CA2E82 /* SimpleNetworking.h in Headers */ = {isa = PBXBuildFile; fileRef = 4093E8531F44372000CA2E82 /* SimpleNetworking.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		4093E85F1F4437E500CA2E82 /* Networking.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4093E85E1F4437E500CA2E82 /* Networking.swift */; };
@@ -24,6 +25,7 @@
 		40D15E741F45774D0071F001 /* FailablePromise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40D15E731F45774D0071F001 /* FailablePromise.swift */; };
 		40DB2E521F470D14000740A0 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40DB2E511F470D14000740A0 /* NetworkService.swift */; };
 		40DB2E7B1F472E40000740A0 /* PinningCertificateContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40DB2E7A1F472E40000740A0 /* PinningCertificateContainer.swift */; };
+		40FF30851F516C1200622146 /* Promise.swift in Sources */ = {isa = PBXBuildFile; fileRef = 40FF30841F516C1200622146 /* Promise.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,6 +44,7 @@
 		40149E2F1F48621100939DD3 /* PromiseTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PromiseTest.swift; sourceTree = "<group>"; };
 		40149E311F486D6100939DD3 /* NetworkingTest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkingTest.swift; sourceTree = "<group>"; };
 		40149E331F489F1E00939DD3 /* pinningCert.cer */ = {isa = PBXFileReference; lastKnownFileType = file; path = pinningCert.cer; sourceTree = "<group>"; };
+		40577FC21F4F38E70082ED75 /* RepeatablePromise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RepeatablePromise.swift; sourceTree = "<group>"; };
 		4059AC101F4C16E5001C3A3B /* NetworkingSerialization.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkingSerialization.swift; sourceTree = "<group>"; };
 		4093E8501F44372000CA2E82 /* SimpleNetworking.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SimpleNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		4093E8531F44372000CA2E82 /* SimpleNetworking.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SimpleNetworking.h; sourceTree = "<group>"; };
@@ -57,6 +60,7 @@
 		40D15E731F45774D0071F001 /* FailablePromise.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FailablePromise.swift; sourceTree = "<group>"; };
 		40DB2E511F470D14000740A0 /* NetworkService.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		40DB2E7A1F472E40000740A0 /* PinningCertificateContainer.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PinningCertificateContainer.swift; sourceTree = "<group>"; };
+		40FF30841F516C1200622146 /* Promise.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Promise.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -155,6 +159,8 @@
 			isa = PBXGroup;
 			children = (
 				40D15E731F45774D0071F001 /* FailablePromise.swift */,
+				40577FC21F4F38E70082ED75 /* RepeatablePromise.swift */,
+				40FF30841F516C1200622146 /* Promise.swift */,
 			);
 			name = Promise;
 			sourceTree = "<group>";
@@ -285,7 +291,9 @@
 				4093E8621F44387E00CA2E82 /* CertificateContainer.swift in Sources */,
 				4093E85F1F4437E500CA2E82 /* Networking.swift in Sources */,
 				40149E271F4816F600939DD3 /* NetworkEndpoint.swift in Sources */,
+				40577FC31F4F38E70082ED75 /* RepeatablePromise.swift in Sources */,
 				40DB2E7B1F472E40000740A0 /* PinningCertificateContainer.swift in Sources */,
+				40FF30851F516C1200622146 /* Promise.swift in Sources */,
 				40D15E741F45774D0071F001 /* FailablePromise.swift in Sources */,
 				4093E8791F4486C800CA2E82 /* NetworkingDelegate.swift in Sources */,
 				4093E8751F4451F600CA2E82 /* NetworkRequest.swift in Sources */,
