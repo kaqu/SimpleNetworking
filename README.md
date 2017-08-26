@@ -1,6 +1,11 @@
 # SimpleNetworking
 
-Simple swift networking returning promises instead of just getting callbacks
+Simple swift networking returning promises instead of just getting callbacks.
+Good for anyone looking for alternative to alamofire or some nonconventional approach.
+
+It is like Alamofire combined with MOYA and PromiseKit, but a lot simpler!
+
+[Swift 4 required]
 
 ## Sample usage
 
@@ -23,17 +28,17 @@ let networkResponsePromise = responsePromise.transform { response in
     return .success(with: response.response)
 }
 
-// asynchronus - called when promise fulfilled - need to manually switch queue if required, default is main
+// asynchronous - called when promise fulfilled - need to manually switch queue if required, default is main
 networkResponsePromise.fulfillmentHandler { response in
     print(response.statusCode)
 }
 
-// asynchronus - called when promise failed - need to manually switch queue if required, default is main
+// asynchronous - called when promise failed - need to manually switch queue if required, default is main
 networkResponsePromise.failureHandler { error in
     print(error)
 }
 
-// synchronus - locking thread until promise fulfilled or failed, then returns optional value - nil if failed
+// synchronous - locking thread until promise fulfilled or failed, then returns optional value - nil if failed
 // be sure if not waiting on same queue as provided in networking.perform othrvise can cause deadlocks
 let value = networkResponsePromise.value
 
@@ -109,3 +114,13 @@ testEndpoint.call(SampleService.downloadData)
 .value
 
 ```
+
+Fastest way to use by
+```bash
+git clone git@github.com:kaqu/SimpleNetworking.git
+```
+or
+```bash
+git submodule add git@github.com:kaqu/SimpleNetworking.git
+```
+in existing git repository.
